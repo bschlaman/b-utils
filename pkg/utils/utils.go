@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -58,4 +59,15 @@ func LogReq(l *logger.BLogger) Adapter {
 			h.ServeHTTP(w, r)
 		})
 	}
+}
+
+// EchoHandle returns an http.Handler that returns the
+// output of ParseRequest in the http response. This is
+// useful for debugging purposes
+func EchoHandle() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		parsedReqBytes, _ := ParseRequest(r)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, string(parsedReqBytes))
+	})
 }
