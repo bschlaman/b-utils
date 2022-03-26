@@ -1,8 +1,8 @@
 package logger
 
 import (
+	"io"
 	"log"
-	"os"
 )
 
 type BLogger struct {
@@ -10,10 +10,10 @@ type BLogger struct {
 	errLogger  *log.Logger
 }
 
-func New(file *os.File) *BLogger {
+func New(out io.Writer) *BLogger {
 	return &BLogger{
-		log.New(file, "[INFO]  ", log.LstdFlags),
-		log.New(file, "[ERROR] ", log.LstdFlags),
+		log.New(out, "[INFO]  ", log.LstdFlags),
+		log.New(out, "[ERROR] ", log.LstdFlags),
 	}
 }
 
