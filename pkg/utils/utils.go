@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/bschlaman/b-utils/pkg/logger"
@@ -67,6 +68,35 @@ func LogReq(l *logger.BLogger) Adapter {
 func EchoHandle() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		parsedReqBytes, _ := ParseRequest(r)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, string(parsedReqBytes))
+	})
+}
+
+// EchoDelayHandle does the same thing as EchoHandle
+// but adds a delay in seconds that can be passed in as
+// a query string parameter. This is useful for mocking network latency
+func EchoDelayHandle() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		parsedReqBytes, _ := ParseRequest(r)
+
+		maxDelaySeconds := 5
+		delaySeconds, err := strconv.Atoi(r.URL.Query().Get("t"))
+		if err != nil || delaySeconds > maxDelaySeconds {
+			delaySeconds = maxDelaySeconds
+		}
+
+		// TODO: unmarshalling / remarshalling parsedReqBytes
+		// is wasteful and error-prone; the unmarshal error case
+		// also needs to be handled
+		echoRequest := make(map[string]interface{})
+		json.Unmarshal(parsedReqBytes, &echoRequest)
+
+		echoRequest["delay"] = delaySeconds
+		parsedReqBytes, _ = json.Marshal(&echoRequest)
+
+		time.Sleep(time.Duration(delaySeconds) * time.Second)
+
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, string(parsedReqBytes))
 	})
