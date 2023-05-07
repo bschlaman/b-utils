@@ -23,7 +23,14 @@ type ReqData struct {
 	UserAgent   string `json:"user_agent"`
 }
 
-// ParseRequest parses the http request and marshals it into json
+// ReqDataSimple contains a subset of request components
+// useful for debugging.
+type ReqDataSimple struct {
+	Method  string `json:"method"`
+	UrlPath string `json:"urlPath"`
+}
+
+// ParseRequest parses the http request and marshals it into json.
 func ParseRequest(r *http.Request) ([]byte, error) {
 	currTime := time.Now()
 	jd, err := json.Marshal(&ReqData{
@@ -33,6 +40,19 @@ func ParseRequest(r *http.Request) ([]byte, error) {
 		currTime.Unix(),
 		r.RemoteAddr,
 		r.UserAgent(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return jd, nil
+}
+
+// ParseRequestSimple parses the http request and marshals it into json.
+// A smaller subset of the request attributes are selected.
+func ParseRequestSimple(r *http.Request) ([]byte, error) {
+	jd, err := json.Marshal(&ReqDataSimple{
+		r.Method,
+		r.URL.Path,
 	})
 	if err != nil {
 		return nil, err
@@ -51,12 +71,34 @@ func LogParseRequest(l *logger.BLogger, r *http.Request) error {
 	return nil
 }
 
+// LogParseRequestSimple parses the request and logs it
+func LogParseRequestSimple(l *logger.BLogger, r *http.Request) error {
+	parsedReqBytes, err := ParseRequestSimple(r)
+	if err != nil {
+		l.Error(err)
+		return err
+	}
+	l.Info("received request:", string(parsedReqBytes))
+	return nil
+}
+
 // LogReq returns an adapter that attempts to log and parse the request
 // If an error is encountered, the error is logged by LogParseRequest
 func LogReq(l *logger.BLogger) Adapter {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			LogParseRequest(l, r)
+			h.ServeHTTP(w, r)
+		})
+	}
+}
+
+// LogReqSimple returns an adapter that attempts to log and parse the request
+// If an error is encountered, the error is logged by LogParseRequestSimple
+func LogReqSimple(l *logger.BLogger) Adapter {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			LogParseRequestSimple(l, r)
 			h.ServeHTTP(w, r)
 		})
 	}
