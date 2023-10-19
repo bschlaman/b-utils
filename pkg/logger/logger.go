@@ -36,3 +36,7 @@ func (bl *BLogger) Infof(format string, v ...interface{}) {
 func (bl *BLogger) Errorf(format string, v ...interface{}) {
 	bl.errLogger.Printf(format, v...)
 }
+
+func (bl *BLogger) Fatalf(format string, v ...interface{}) {
+	bl.errLogger.Fatalf(format, v...)
+}
