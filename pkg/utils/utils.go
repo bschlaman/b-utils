@@ -10,8 +10,8 @@ import (
 	"github.com/bschlaman/b-utils/pkg/logger"
 )
 
-// Adapter is a middleware adapter
-type Adapter func(h http.Handler) http.Handler
+// Middleware type allows chaining of handlers
+type Middleware func(h http.Handler) http.Handler
 
 // ReqData contains useful components of a request
 type ReqData struct {
@@ -82,9 +82,9 @@ func LogParseRequestSimple(l *logger.BLogger, r *http.Request) error {
 	return nil
 }
 
-// LogReq returns an adapter that attempts to log and parse the request
+// LogReq returns a Middleware that attempts to log and parse the request
 // If an error is encountered, the error is logged by LogParseRequest
-func LogReq(l *logger.BLogger) Adapter {
+func LogReq(l *logger.BLogger) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			LogParseRequest(l, r)
@@ -93,9 +93,9 @@ func LogReq(l *logger.BLogger) Adapter {
 	}
 }
 
-// LogReqSimple returns an adapter that attempts to log and parse the request
+// LogReqSimple returns a Middleware that attempts to log and parse the request
 // If an error is encountered, the error is logged by LogParseRequestSimple
-func LogReqSimple(l *logger.BLogger) Adapter {
+func LogReqSimple(l *logger.BLogger) Middleware {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			LogParseRequestSimple(l, r)
